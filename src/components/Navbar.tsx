@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router";
 
+import { useAuth } from "../context/AuthContext";
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const { user, signInWithGithub, signOut } = useAuth();
+
+  const displayName = user?.user_metadata.user_name || user?.email;
 
   return (
     <nav className="fixed top-0 w-full z-40 bg-[rgba(10, 10, 10, 0.8)] backdrop-blur-lg border-b border-white/10 shadow-lg">
@@ -38,6 +44,34 @@ const Navbar = () => {
               Create Community
             </Link>
           </div>
+          {/* Desktop Auth */}
+          <div className="hidden md:flex items-center">
+            {user ? (
+              <div className="flex items-center space-x-4">
+                {user.user_metadata.avatar_url && (
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="User Avatar"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                )}
+                <span className="text-white">{displayName}</span>
+                <button
+                  onClick={signOut}
+                  className="bg-rose-500 px-3 py-1 rounded"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={signInWithGithub}
+                className="bg-emerald-500 px-3 py-1 rounded"
+              >
+                Sign In With Github
+              </button>
+            )}
+          </div>
           {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button
@@ -72,6 +106,7 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-[rgba(10, 10, 10, 0.9)]">
