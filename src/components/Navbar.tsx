@@ -58,7 +58,7 @@ const Navbar = () => {
                 <span className="text-white">{displayName}</span>
                 <button
                   onClick={signOut}
-                  className="bg-rose-500 px-3 py-1 rounded"
+                  className="bg-rose-500 px-3 py-1 rounded cursor-pointer"
                 >
                   Sign Out
                 </button>

@@ -39,7 +39,7 @@ const CreatePost = () => {
   const [content, setContent] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const { mutate } = useMutation({
+  const { mutate, isPending, isError } = useMutation({
     mutationFn: (data: { post: PostInput; imageFile: File }) => {
       return createPost(data.post, data.imageFile);
     },
@@ -63,35 +63,45 @@ const CreatePost = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4">
       <div>
-        <label>Title</label>
+        <label className="block mb-2 font-medium">Title</label>
         <input
           type="text"
           id="text"
           required
           onChange={(event) => setTitle(event.target.value)}
+          className="w-full border border-white/50 bg-transparent p-2 rounded outline-none"
         />
       </div>
       <div>
-        <label>Content</label>
+        <label className="block mb-2 font-medium">Content</label>
         <textarea
           id="content"
           required
           onChange={(event) => setContent(event.target.value)}
+          className="w-full border border-white/50 bg-transparent p-2 rounded outline-none"
+          rows={5}
         />
       </div>
       <div>
-        <label>Upload Image</label>
+        <label className="block mb-2 font-medium">Upload Image</label>
         <input
           type="file"
           accept="image/*"
           id="image"
           required
           onChange={handleFileChange}
+          className="w-full text-gray-400 cursor-pointer"
         />
       </div>
-      <button type="submit">Create Post</button>
+      <button
+        type="submit"
+        className="bg-cyan-500 text-white px-4 py-2 rounded cursor-pointer"
+      >
+        {isPending ? "Creating..." : "Create Post"}
+      </button>
+      {isError && <p className="text-rose-500">Error Creating Post</p>}
     </form>
   );
 };
