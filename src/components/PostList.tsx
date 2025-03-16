@@ -9,6 +9,7 @@ export interface Post {
   content: string;
   created_at: string;
   image_url: string;
+  avatar_url?: string;
 }
 
 const fetchPosts = async (): Promise<Post[]> => {
@@ -31,7 +32,7 @@ const PostList = () => {
   });
 
   if (isLoading) {
-    <div>Posts Loading...</div>;
+    return <div>Posts Loading...</div>;
   }
 
   if (error) {

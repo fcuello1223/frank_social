@@ -1,12 +1,15 @@
-import PostDetail from "../components/PostDetail"
+import { useParams } from "react-router";
 
+import PostDetail from "../components/PostDetail";
 
 const PostPage = () => {
-  return (
-    <div className="pt-10">
-      <PostDetail />
-    </div>
-  )
-}
+  const { id } = useParams<{ id: string }>();
 
-export default PostPage
+  return (
+    <div className="pt-20">
+      <PostDetail postId={Number(id)} />
+    </div>
+  );
+};
+
+export default PostPage;
