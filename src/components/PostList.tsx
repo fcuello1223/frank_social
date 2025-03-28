@@ -10,13 +10,12 @@ export interface Post {
   created_at: string;
   image_url: string;
   avatar_url?: string;
+  like_count?: number;
+  comment_count?: number;
 }
 
 const fetchPosts = async (): Promise<Post[]> => {
-  const { data, error } = await supabase
-    .from("Posts")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.rpc("get_posts_with_counts");
 
   if (error) {
     throw new Error(error.message);
@@ -27,7 +26,7 @@ const fetchPosts = async (): Promise<Post[]> => {
 
 const PostList = () => {
   const { data, error, isLoading } = useQuery<Post[], Error>({
-    queryKey: ["posts"],
+    queryKey: ["Posts"],
     queryFn: fetchPosts,
   });
 

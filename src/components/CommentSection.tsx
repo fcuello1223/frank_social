@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../supabase-client";
+import CommentItem from "./CommentItem";
 
 interface Props {
   postId: number;
@@ -10,6 +11,16 @@ interface Props {
 interface NewComment {
   content: string;
   parent_comment_id?: number | null;
+}
+
+export interface Comment {
+  id: number;
+  post_id: number;
+  parent_comment_id: number | null;
+  content: string;
+  user_id: string;
+  created_at: string;
+  author: string;
 }
 
 const createComment = async (
@@ -35,10 +46,36 @@ const createComment = async (
   }
 };
 
+const fetchComments = async (postId: number): Promise<Comment[]> => {
+  const { data, error } = await supabase
+    .from("comments")
+    .select("*")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data as Comment[];
+};
+
 const CommentSection = ({ postId }: Props) => {
   const [commentText, setCommentText] = useState<string>("");
 
   const { user } = useAuth();
+
+  const queryClient = useQueryClient();
+
+  const {
+    data: comments,
+    isLoading,
+    error,
+  } = useQuery<Comment[], Error>({
+    queryKey: ["comments", postId],
+    queryFn: () => fetchComments(postId),
+    refetchInterval: 5000,
+  });
 
   const { mutate, isPending, isError } = useMutation({
     mutationFn: (newComment: NewComment) =>
@@ -48,6 +85,10 @@ const CommentSection = ({ postId }: Props) => {
         user?.id,
         user?.user_metadata.user_name
       ),
+    
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    }
   });
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -61,6 +102,42 @@ const CommentSection = ({ postId }: Props) => {
 
     setCommentText("");
   };
+
+  const buildCommentTree = (
+    flatComments: Comment[]
+  ): (Comment & { children?: Comment[] })[] => {
+    const map = new Map<number, Comment & { children?: Comment[] }>();
+
+    const roots: (Comment & { children?: Comment[] })[] = [];
+
+    flatComments.forEach((comment) => {
+      map.set(comment.id, { ...comment, children: [] });
+    });
+
+    flatComments.forEach((comment) => {
+      if (comment.parent_comment_id) {
+        const parent = map.get(comment.parent_comment_id);
+
+        if (parent) {
+          parent.children!.push(map.get(comment.id)!);
+        }
+      } else {
+        roots.push(map.get(comment.id)!);
+      }
+    });
+
+    return roots;
+  };
+
+  if (isLoading) {
+    return <div>Loading Comments...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  const commentTree = comments ? buildCommentTree(comments) : [];
 
   return (
     <div className="mt-6">
@@ -90,6 +167,12 @@ const CommentSection = ({ postId }: Props) => {
           You Must Be Logged In To Post A Comment!
         </p>
       )}
+      {/* Comments Display */}
+      <div className="space-y-4">
+        {commentTree.map((comment, index) => {
+          return <CommentItem key={index} comment={comment} postId={postId} />;
+        })}
+      </div>
     </div>
   );
 };
